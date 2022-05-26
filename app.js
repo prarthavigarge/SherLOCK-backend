@@ -1,6 +1,3 @@
-const cors=require("cors");
-const mongoose=require("mongoose");
-require("dotenv").config();
 const express = require("express");
 const Criminal = require("./models/criminal.js");
 
@@ -24,14 +21,61 @@ app.use((req, res, next) => {
 
 app.use(cors());
 
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg" ||
+    file.mimetype === "image/png"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+const storage = multer.memoryStorage();
+
+var upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 1024 * 1024 * 5,
+  },
+});
+
 app.get("/", (req, res) => {
   return res.status(200).json({
     message: "Server is up and running",
   });
 });
+
+app.post("/findCriminal", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      console.log("No file received");
+      return res.send({
+        success: false,
+        mesage: "No file received by the server"
+      });
+    } else {
+      console.log("File received");
+      return res.send({
+        success: true,
+        mesage: "No file received by the server"
+      }); 
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: err.toString(),
+    });
+  }
+})
+
 const port = process.env.PORT || 3000;
 
 app.listen(port, async () => {
+  console.log("Model Loaded");
   await mongoose
     .connect(process.env.DBURI, {
       useNewUrlParser: true,
